@@ -1,0 +1,15 @@
+<label class="field">
+  <span>{{ field.label }}{% if field.unit %} <small class="unit">({{ field.unit }})</small>{% endif %}</span>
+  {% if field.kind == 'select' %}
+    <select name="{{ field.name }}" required>
+      {% for option in field.options %}
+        <option value="{{ option }}" {% if input_values[field.name]|string == option|string %}selected{% endif %}>
+          {% if field.name == 'RainToday' %}{{ 'Yes — Rain' if option == 1 else 'No — No Rain' }}{% else %}Code {{ option }}{% endif %}
+        </option>
+      {% endfor %}
+    </select>
+  {% else %}
+    <input type="number" name="{{ field.name }}" step="{{ field.step }}" min="{{ field.min }}" max="{{ field.max }}" value="{{ input_values[field.name] }}" required>
+  {% endif %}
+  <small class="field-help">{{ field.help }}</small>
+</label>

@@ -1,0 +1,41 @@
+{
+  "accuracy": 0.8223816355810617,
+  "precision": 0.8117457763475463,
+  "recall": 0.723816355810617,
+  "f1": 0.7652635570724308,
+  "confusion_matrix": [
+    [
+      3714,
+      468
+    ],
+    [
+      770,
+      2018
+    ]
+  ],
+  "test_records": 6970,
+  "train_records": 27880,
+  "feature_names": [
+    "MinTemp",
+    "MaxTemp",
+    "Rainfall",
+    "Evaporation",
+    "Sunshine",
+    "WindGustDir",
+    "WindGustspeed",
+    "WindDir9am",
+    "WindDir3pm",
+    "WindSpeed9am",
+    "WindSpeed3pm",
+    "Humidity9am",
+    "Humidity3pm",
+    "Pressure9am",
+    "Pressure3pm",
+    "Cloud9am",
+    "Cloud3pm",
+    "Temp9am",
+    "Temp3pm",
+    "RainToday"
+  ],
+  "dataset_name": "weather_data_shuffled.csv"
+}

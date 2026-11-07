@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather Rain Prediction | MCA Project</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#home"><span class="brand-mark">☁</span><span>Weather <b>Project</b></span></a>
+  <nav>
+    <a href="#home">Home</a><a href="#eda">Data Analysis</a><a href="#predict">Try Prediction</a><a href="#about">About</a>
+  </nav>
+</header>
+
+<main class="page" id="home">
+  <section class="hero">
+    <div class="hero-content">
+      <span class="eyebrow">MCA MINI PROJECT</span>
+      <h1>Weather Data Analysis<br><em>& Rain Prediction</em></h1>
+      <p>Explore past weather records, understand the data with simple charts, and try a Rain / No Rain prediction for tomorrow.</p>
+      <a class="button button-light" href="#predict">Try the prediction <span>→</span></a>
+    </div>
+    <div class="hero-art" aria-hidden="true"><div class="sun"></div><div class="cloud">☁</div><div class="drops">╱　╱　╱</div></div>
+  </section>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}<div class="alert {{ category }}">{{ message }}</div>{% endfor %}
+  {% endwith %}
+
+  <section class="stats-grid" aria-label="Dataset summary">
+    <article class="stat-card"><span class="stat-icon">▦</span><span class="stat-label">Weather records</span><strong>{{ "{:,.0f}".format(total_records) }}</strong><small>Rows in the dataset</small></article>
+    <article class="stat-card"><span class="stat-icon">☷</span><span class="stat-label">Input details</span><strong>{{ total_features }}</strong><small>Weather features</small></article>
+    <article class="stat-card"><span class="stat-icon">☀</span><span class="stat-label">No Rain records</span><strong>{{ "{:,.0f}".format(no_rain) }}</strong><small>{{ "%.1f"|format(no_rain_pct) }}% of all records</small></article>
+    <article class="stat-card"><span class="stat-icon">🌧</span><span class="stat-label">Rain records</span><strong>{{ "{:,.0f}".format(rain) }}</strong><small>{{ "%.1f"|format(rain_pct) }}% of all records</small></article>
+  </section>
+
+  <section class="section" id="eda">
+    <div class="section-title"><div><span class="eyebrow">UNDERSTAND YOUR DATA</span><h2>Data analysis (EDA)</h2><p>EDA means Exploratory Data Analysis. It helps us understand the dataset before training a model.</p></div><span class="tag">{{ dataset_name }}</span></div>
+    <div class="chart-grid">
+      <article class="chart-card"><h3>1. Rain and No Rain records</h3><p>Shows how many examples belong to each output class.</p><img src="{{ url_for('static', filename='charts/rain_classes.png') }}" alt="Bar chart showing rain and no rain record counts"></article>
+      <article class="chart-card"><h3>2. Rainfall values</h3><p>Shows how rainfall measurements are spread across the records. The chart limits the display at the 99th percentile so extreme values do not hide the main pattern.</p><img src="{{ url_for('static', filename='charts/rainfall_distribution.png') }}" alt="Histogram of rainfall measurements"></article>
+      <article class="chart-card"><h3>3. Afternoon humidity</h3><p>Compares 3 PM humidity for records followed by rain and no rain.</p><img src="{{ url_for('static', filename='charts/humidity_by_rain.png') }}" alt="Humidity histogram grouped by rain tomorrow"></article>
+      <article class="chart-card"><h3>4. Features related to tomorrow's rain</h3><p>Correlation shows how two columns move together. It does not prove that one causes the other.</p><img src="{{ url_for('static', filename='charts/feature_correlation.png') }}" alt="Feature correlation bar chart"></article>
+    </div>
+    <div class="info-row">
+      <div><b>{{ missing_values }}</b><span>Missing values</span></div>
+      <div><b>{{ "%.1f"|format(no_rain_pct) }}%</b><span>No Rain class</span></div>
+      <div><b>{{ "%.1f"|format(rain_pct) }}%</b><span>Rain class</span></div>
+      <div><b>Randomly shuffled</b><span>Row order of the dataset</span></div>
+    </div>
+    <p class="small-note">The dataset is not balanced by force. Shuffling changes only the row order; it does not change the number of Rain and No Rain records.</p>
+  </section>
+
+  <section class="section" id="predict">
+    <div class="section-title"><div><span class="eyebrow">TRY THE MACHINE LEARNING MODEL</span><h2>Predict rain for tomorrow</h2><p>Start with the main weather details. You can open the extra section if you want to enter all 20 values yourself.</p></div><span class="tag">Random Forest · 10 trees</span></div>
+
+    {% if prediction %}
+    <div class="result {{ 'rain-result' if prediction.rain else 'dry-result' }}">
+      <div class="result-icon">{{ '🌧️' if prediction.rain else '☀️' }}</div>
+      <div><span class="result-label">MODEL RESULT</span><h3>{{ prediction.label }}</h3><p>Output value: <b>{{ prediction.code }}</b> — {% if prediction.rain %}Rain{% else %}No Rain{% endif %}</p></div>
+    </div>
+    {% endif %}
+
+    <div class="quick-examples">
+      <div><b>Want to test it quickly?</b><small>Load a real example from the dataset. Then click Predict.</small></div>
+      <button type="button" class="button button-outline" onclick="loadExample('0')">Load No Rain example</button>
+      <button type="button" class="button button-outline" onclick="loadExample('1')">Load Rain example</button>
+    </div>
+
+    <form method="post" class="prediction-form" action="{{ url_for('home') }}">
+      <h3 class="form-heading">Main weather details <span>These are a good place to start</span></h3>
+      <div class="field-grid">
+        {% for field in basic_fields %}{% include 'field.html' %}{% endfor %}
+      </div>
+      <details class="advanced">
+        <summary>More weather details <span>13 additional inputs · optional to edit</span></summary>
+        <p class="advanced-intro">The model still receives all 20 inputs. These extra values are filled with typical dataset values unless you change them.</p>
+        <div class="field-grid">
+          {% for field in advanced_fields %}{% include 'field.html' %}{% endfor %}
+        </div>
+      </details>
+      <div class="form-bottom"><p><b>Note:</b> This is a student project model trained on historical records. It is for learning and demonstration, not an official weather forecast.</p><button class="button button-primary" type="submit">Predict Rain Tomorrow <span>→</span></button></div>
+    </form>
+  </section>
+
+  <section class="section" id="model">
+    <div class="section-title"><div><span class="eyebrow">MODEL TESTING</span><h2>How well did the model perform?</h2><p>These scores are calculated from the test data that was not used to train the model.</p></div></div>
+    {% if model_results %}
+    <div class="metric-grid">
+      <div class="metric"><span>Accuracy</span><b>{{ "%.1f"|format(model_results.accuracy * 100) }}%</b></div>
+      <div class="metric"><span>Precision</span><b>{{ "%.1f"|format(model_results.precision * 100) }}%</b></div>
+      <div class="metric"><span>Recall</span><b>{{ "%.1f"|format(model_results.recall * 100) }}%</b></div>
+      <div class="metric"><span>F1 score</span><b>{{ "%.1f"|format(model_results.f1 * 100) }}%</b></div>
+    </div>
+    <div class="matrix-wrap"><h3>Confusion matrix</h3><p>Rows are actual values. Columns are model predictions.</p>
+      <table class="matrix"><tr><th></th><th>Predicted No Rain</th><th>Predicted Rain</th></tr>
+      <tr><th>Actual No Rain</th><td>{{ model_results.confusion_matrix[0][0] }}</td><td>{{ model_results.confusion_matrix[0][1] }}</td></tr>
+      <tr><th>Actual Rain</th><td>{{ model_results.confusion_matrix[1][0] }}</td><td>{{ model_results.confusion_matrix[1][1] }}</td></tr></table>
+    </div>
+    {% else %}<p class="small-note">Model evaluation results are not available yet. Run <code>python train.py</code> once to create them.</p>{% endif %}
+  </section>
+
+  <section class="section" id="dataset">
+    <div class="section-title"><div><span class="eyebrow">DATASET PREVIEW</span><h2>Sample weather records</h2><p>These are the first six rows after random shuffling.</p></div><span class="tag">{{ total_records }} rows · 21 columns</span></div>
+    <div class="table-scroll"><table class="data-table"><thead><tr>{% for column in preview[0].keys() %}<th>{{ column }}</th>{% endfor %}</tr></thead><tbody>{% for row in preview %}<tr>{% for value in row.values() %}<td>{{ value }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>
+    <div class="target-explain"><b>What does the output mean?</b><span><strong>0 = No Rain</strong> &nbsp; · &nbsp; <strong>1 = Rain</strong></span></div>
+  </section>
+
+  <section class="section" id="about">
+    <div class="section-title"><div><span class="eyebrow">PROJECT DETAILS</span><h2>About this project</h2><p>A simple academic project using Python, data analysis and machine learning.</p></div></div>
+    <div class="about-grid">
+      <div><span>Student name</span><b>{{ student_name }}</b></div><div><span>Roll number</span><b>{{ roll_number }}</b></div>
+      <div><span>University</span><b>{{ university }}</b></div><div><span>Course</span><b>{{ course }}</b></div>
+      <div><span>Programming</span><b>Python</b></div><div><span>Web application</span><b>Flask, HTML and CSS</b></div>
+    </div>
+    <div class="project-note"><b>One important point:</b> The dataset target is <code>RainTomorrow</code>, so this project predicts Rain or No Rain. It does not currently predict a numerical temperature value.</div>
+  </section>
+  <footer>Weather Data Analysis & Rain Prediction · MCA Mini Project</footer>
+</main>
+
+<script>
+const sampleExamples = {{ sample_examples|tojson }};
+function loadExample(classCode) {
+  const example = sampleExamples[classCode];
+  if (!example) {
+    alert('This sample is not available yet. Please run the model training again.');
+    return;
+  }
+  Object.entries(example).forEach(([name, value]) => {
+    const input = document.querySelector(`[name="${name}"]`);
+    if (input) input.value = value;
+  });
+  document.querySelector('.prediction-form').scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+</script>
+</body>
+</html>
